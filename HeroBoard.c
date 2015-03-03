@@ -9,7 +9,7 @@ It was developed by rodrigo@mastria.com.br as part of the HackIllinois.org 2015
   
 Window *window;
 AppTimer *timer1;
-const int delta = 7;   // define the speed of the animation. 5 is faster and 10 is slower
+const int delta = 7;   // defines the speed of the animation. 5 is faster and 10 is slower
 
 TextLayer *ABC_layer;
 const int ABC_layer_w = 144;
@@ -116,7 +116,7 @@ static void down_click_handler(ClickRecognizerRef recognizer, void * context) {
   
     GRect current = layer_get_frame(text_layer_get_layer(ABC_layer));
     GRect current2 = layer_get_frame(text_layer_get_layer(ABC_layer2));
-////////////////////////////////////////////////////////////////////////////// display respective block
+////////////////////////////////////////////////////////////////////////////// display respective letter block
   if (current.origin.x < 40 && current.origin.x > 13)
     {
       text_layer_set_text(text_layer, "G H I");
@@ -159,9 +159,8 @@ void timer_callback(void *data) {
     //Get current position
     GRect current = layer_get_frame(text_layer_get_layer(ABC_layer));
     GRect current2 = layer_get_frame(text_layer_get_layer(ABC_layer2));
-//    GRect current3 = layer_get_frame(text_layer_get_layer(intro_layer));
+    //    GRect current3 = layer_get_frame(text_layer_get_layer(intro_layer));
  
-    //Check to see if we have hit the edges
 
     if (current.origin.x < 144)
     {
@@ -200,8 +199,8 @@ void window_load(Window *window)
 { 
 
   
-  //Create the square layer
-  ABC_layer = text_layer_create(GRect(-72, 0, ABC_layer_w, ABC_layer_h));  //-72 x origin
+  
+  ABC_layer = text_layer_create(GRect(-72, 0, ABC_layer_w, ABC_layer_h));  //-72 x origin , set it to 0 and comment out the timer1 line (234) to see the static image on the watch
   text_layer_set_background_color(ABC_layer, GColorClear);
   text_layer_set_text_color(ABC_layer, GColorBlack);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(ABC_layer));
@@ -240,7 +239,6 @@ void window_load(Window *window)
 
 void window_unload(Window *window)
 {
-  //We will safely destroy the Window's elements here!
 
   //Cancel timer
 app_timer_cancel(timer1);
@@ -254,7 +252,7 @@ text_layer_destroy(text_layer);
 
 void init()
 {
-  //Initialize the app elements here!
+ 
       //Initialize the app elements here!
   window = window_create();
   
@@ -270,8 +268,6 @@ void deinit()
 {
   //De-initialize elements here to save memory!
 
-
-    //We will safely destroy the Window's elements here!
   window_destroy(window);
 
 }
