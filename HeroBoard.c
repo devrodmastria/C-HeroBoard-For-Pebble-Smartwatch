@@ -1,6 +1,6 @@
 /*
 This is a Pebble app keyboard based on the game Guitar Hero. 
-It is a semi-ready watchapp. When completed, it could be implemented as an exclusive keyboard for Pebble. 
+It could be implemented as an exclusive keyboard for Pebble. 
 It was developed by rodrigo@mastria.com.br as part of the HackIllinois.org 2015
 */
 #include <pebble.h>
@@ -23,12 +23,15 @@ TextLayer *text_layer;
 const int text_layer_w = 144;
 const int text_layer_h = 32;
 
-TextLayer *instruction_layer;
-const int instruction_layer_w = 144;
-const int instruction_layer_h = 32;
+
 
 char *lettersText = "Q W E R T Y U I O P\n\n\n\nA S D F G H J K L ?\n\n\n\nZ X C V B N M  ,  .";
+char *instruction = "Tips: Long press UP starts over. Long press SELECT deletes last character. Long press DOWN adds space.";
 char *fontText = FONT_KEY_GOTHIC_18_BOLD;
+
+TextLayer *instruction_layer;
+const int instruction_layer_w = 800;
+const int instruction_layer_h = 32;
 
 char *initial_message = "";
 char *final_message = "";
@@ -104,7 +107,7 @@ static void up_click_handler(ClickRecognizerRef recognizer, void * context) {
     
   
   
-  int a2 = current.origin.x;
+  int a2 = current2.origin.x;
   if (a2 > 118)
     setLetter("q");
   else if (a2 > 102)
@@ -232,11 +235,11 @@ static void down_click_handler(ClickRecognizerRef recognizer, void * context) {
 
 static void long_down_click_handler(ClickRecognizerRef recognizer, void * context) {
   
-  final_message = malloc(strlen(initial_message)+1+1); /* make space for the new string (should check the return value ...) */
+  final_message = malloc(strlen(initial_message)+1+1); /* make space for the new string plus end of string character */
   strcpy(final_message, initial_message); //copy name into the new var
-  strcat(final_message, " "); /* add the extension */
-  initial_message = final_message;
-  text_layer_set_text(text_layer, final_message);
+  strcat(final_message, " "); /* add space */
+  initial_message = final_message; // updates the global value of the initial message
+  text_layer_set_text(text_layer, initial_message);
   
 }
 
@@ -247,49 +250,11 @@ static void long_up_click_handler(ClickRecognizerRef recognizer, void * context)
   
 }
 
-
 static void long_select_click_handler(ClickRecognizerRef recognizer, void * context) {
+  // delete last character from message
   
-  // confirm message / send to someone
-  
-}
-
-static void long_back_click_handler(ClickRecognizerRef recognizer, void * context) {
-  
-    GRect current = layer_get_frame(text_layer_get_layer(ABC_layer));
-    GRect current2 = layer_get_frame(text_layer_get_layer(ABC_layer2));
-
-    if (current.origin.x < ABC_layer_w)
-    {
-        dx = 1;
-    }
-    else if (current.origin.x > ABC_layer_w - 1)
-    {
-        current.origin.x = -ABC_layer_w;
-        dx = 1;
-    }
-    
-    if (current2.origin.x <ABC_layer_w)
-      {
-      dx2 = 1;
-    }
-    else if(current2.origin.x > ABC_layer_w - 1)
-      {
-      current2.origin.x = -ABC_layer_w;
-      dx2 = 1;
-    }
-  
-    //Move the square to the next position, modifying the x value
-    GRect next = GRect(current.origin.x + dx, current.origin.y, ABC_layer_w, ABC_layer_h);
-    layer_set_frame(text_layer_get_layer(ABC_layer), next);
-  
-    GRect next2 = GRect(current2.origin.x + dx2, current2.origin.y, ABC_layer_w, ABC_layer_h);
-    layer_set_frame(text_layer_get_layer(ABC_layer2), next2);
-  
-    if (current.origin.x >= 0)
-      text_layer_set_text(instruction_layer, itoa(current.origin.x));
-    if (current2.origin.x >= 0)
-      text_layer_set_text(instruction_layer, itoa(current2.origin.x));
+  initial_message[strlen(initial_message)-1] = 0;
+  text_layer_set_text(text_layer, initial_message);
   
 }
 
@@ -299,9 +264,8 @@ static void click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
   
   window_long_click_subscribe(BUTTON_ID_DOWN, 0, long_down_click_handler, NULL); // space
-  window_long_click_subscribe(BUTTON_ID_UP, 0, long_up_click_handler, NULL); // delete
-//   window_long_click_subscribe(BUTTON_ID_SELECT, 0, long_select_click_handler, NULL); // confirm
-//   window_long_click_subscribe(BUTTON_ID_DOWN, 0, long_back_click_handler, NULL); // move banner manually
+  window_long_click_subscribe(BUTTON_ID_UP, 0, long_up_click_handler, NULL); // delete message
+  window_long_click_subscribe(BUTTON_ID_SELECT, 0, long_select_click_handler, NULL); // delete last character
   
 }
 
@@ -309,6 +273,7 @@ void timer_callback(void *data) {
     //Get current position
     GRect current = layer_get_frame(text_layer_get_layer(ABC_layer));
     GRect current2 = layer_get_frame(text_layer_get_layer(ABC_layer2));
+    GRect current3 = layer_get_frame(text_layer_get_layer(instruction_layer));
 
     if (current.origin.x < ABC_layer_w)
     {
@@ -329,6 +294,10 @@ void timer_callback(void *data) {
       current2.origin.x = -ABC_layer_w;
       dx2 = 1;
     }
+    if (current3.origin.x < -instruction_layer_w){ // sends instruction layer back to the beginning if it reaches its end
+      current3.origin.x = 144;
+      
+    }
   
     //Move the square to the next position, modifying the x value
     GRect next = GRect(current.origin.x + dx, current.origin.y, ABC_layer_w, ABC_layer_h);
@@ -336,6 +305,9 @@ void timer_callback(void *data) {
   
     GRect next2 = GRect(current2.origin.x + dx2, current2.origin.y, ABC_layer_w, ABC_layer_h);
     layer_set_frame(text_layer_get_layer(ABC_layer2), next2);
+  
+    GRect next3 = GRect(current3.origin.x - (2*dx2), current3.origin.y, instruction_layer_w, instruction_layer_h);
+    layer_set_frame(text_layer_get_layer(instruction_layer), next3);
     
     //Register next execution
     timer1 = app_timer_register(delta, (AppTimerCallback) timer_callback, NULL);
@@ -368,11 +340,11 @@ void window_load(Window *window)
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(text_layer));
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
   
-  instruction_layer = text_layer_create(GRect(0, 105, instruction_layer_w, instruction_layer_h));
+  instruction_layer = text_layer_create(GRect(200, 105, instruction_layer_w, instruction_layer_h));
   text_layer_set_background_color(instruction_layer, GColorBlack);
   text_layer_set_text_color(instruction_layer, GColorWhite);
   text_layer_set_font(instruction_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
-  text_layer_set_text(instruction_layer, "Hello World");
+  text_layer_set_text(instruction_layer, instruction);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(instruction_layer));
   text_layer_set_text_alignment(instruction_layer, GTextAlignmentCenter);
   
